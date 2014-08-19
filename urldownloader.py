@@ -156,7 +156,7 @@ if __name__ == '__main__':
     #loader = UrlLoader()
 
     user = User()
-    user.loadFromFile('test1.user', )
+    user.loadFromFile('test.user', )
     loader = PbsUrlLoader(url = 'http://suwon.qb.sec.samsung.net',
                       user = user,
                       pageId = '2024322')
