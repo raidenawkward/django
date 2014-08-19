@@ -3,6 +3,8 @@ import time
 import urllib
 import os
 
+import time
+
 from user import User
 from urlloader import UrlLoader
 from pbsloader import PbsUrlLoader
@@ -11,26 +13,50 @@ import urlfileinfo
 from urlfileinfo import UrlFileInfo
 
 
+
+
 class UrlDownloader:
     '''
     specified url downloader
 
     '''
 
+
     def __init__(self):
         self._taskList = []
 
+
     def appendUrlFileInfo(self, info, output = None):
         task = UrlDownloadTask(info, output)
-        self._urlList.append(task)
+        self._taskList.append(task)
+
+
+    def append(self, task):
+        self._taskList.append(task)
 
     def getTaskList(self):
         return self._taskList
+
 
     def startDownload(self):
         taskList = self.getTaskList()
         for task in taskList:
             task.start()
+
+
+    def getActivatedTasks(self):
+        res = []
+        taskList = self.getTaskList()
+
+        for task in taskList:
+            thread = task.getThread()
+            if thread == None:
+                continue
+
+            if thread.isAlive():
+                res.append(task)
+        return res
+
 
 
 
@@ -48,6 +74,7 @@ class UrlDownloadTask:
     STATUS_FINISH = 'status_finish'
     STATUS_ERROR = 'status_error'
 
+
     def __init__(self, urlFileInfo, target = None):
         self._id = UrlDownloadTask.GLOBAL_ID
         UrlDownloadTask.GLOBAL_ID += 1
@@ -59,30 +86,48 @@ class UrlDownloadTask:
         args = {self._urlFileInfo}
         self._thread = threading.Thread(target = self._download, args = args)
 
+
     def getId(self):
         return self._id
+
 
     def getStatus(self):
         return self._status
 
+
     def _setStatus(self, status):
         self._status = status
+
 
     def getThread(self):
         return self._thread
 
+
     def getUrlFileInfo(self):
         return self._urlFileInfo
+
 
     def getTarget(self):
         return self._target
 
+
     def setTarget(self, target):
         self._target = target
 
+
     def getDownloadedSize(self):
+        target = self.getTarget()
+
+        if target == None:
+            return 0
+
+        if os.path.exists(target) == False:
+            return 0
+
         size = os.path.getsize(self.getTarget())
+
         return size
+
 
     def __downloadNormalUrl(self, url, target):
         rfp = None
@@ -104,6 +149,7 @@ class UrlDownloadTask:
                 rfp.close()
 
         return res
+
 
     def _download(self, remoteFile):
         self._setStatus(UrlDownloadTask.STATUS_WORKING)
@@ -136,6 +182,7 @@ class UrlDownloadTask:
 
         self._setStatus(UrlDownloadTask.STATUS_FINISH)
 
+
     def start(self):
         thread = self.getThread()
         if thread is None:
@@ -147,6 +194,74 @@ class UrlDownloadTask:
         thread.start()
 
         return True
+
+
+
+
+class UrlDownloaderMonitor:
+
+    DEF_TIME_INTERVAL = 1.0
+
+    def __init__(self, downloader,
+                 monitoringInterval = DEF_TIME_INTERVAL):
+        self._downloader = downloader
+        self._monitoringInterval = monitoringInterval
+
+
+    def getDownloader(self):
+        return self._downloader
+
+
+    def getMonitoringInterval(self):
+        return self._monitoringInterval
+
+
+    def setMonitoringInterval(self, interval):
+        self._monitoringInterval = interval
+
+
+    def _onBeforeStartMonitoring(self):
+        pass
+
+
+    def _onMonitoringRoundStart(self, aliveTaskList):
+        pass
+
+
+    def _onMonitoringRoundEnd(self, aliveTaskList):
+        pass
+
+
+    def _onMonitoringTask(self, task):
+        pass
+
+
+    def _onFinishMoniting(self):
+        pass
+
+
+    def startMonitoring(self):
+        self._onBeforeStartMonitoring()
+
+        downloader = self.getDownloader()
+        if downloader == None:
+            return
+
+        while True:
+            taskList = downloader.getActivatedTasks()
+            count = len(taskList)
+            if count <= 0:
+                break;
+
+            self._onMonitoringRoundStart(taskList)
+
+            for task in taskList:
+                self._onMonitoringTask(task)
+
+            self._onMonitoringRoundEnd(taskList)
+            time.sleep(self.getMonitoringInterval())
+
+        self._onFinishMoniting()
 
 
 
