@@ -1,0 +1,12 @@
+include MANIFEST.in
+include COPYING
+include INSTALL
+include GeneralFAQ.html
+include README.html.in
+include README.html
+include README.txt
+include doc.html
+include doc.html.in
+include TODO
+include ChangeLog
+include *.py
