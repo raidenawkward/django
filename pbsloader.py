@@ -211,6 +211,7 @@ class PbsProductsAnalyser:
 
         return info
 
+
     def analyse(self):
         pageContent = self._loadAnalysingContent()
         self._percentage = self._analysePercentage(pageContent)

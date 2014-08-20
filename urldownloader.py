@@ -44,6 +44,16 @@ class UrlDownloader:
             task.start()
 
 
+    def getSizeToDownload(self):
+        res = 0
+        taskList = self.getTaskList()
+        for task in taskList:
+            info = task.getUrlFileInfo()
+            res += info.getFileSize()
+
+        return res
+
+
     def getActivatedTasks(self):
         res = []
         taskList = self.getTaskList()
