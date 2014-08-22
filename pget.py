@@ -178,7 +178,7 @@ def report_error_arg_value(value):
 
 
 def report_error_arg_cmd(cmd):
-    sys.stdout.write('error: unknown cmd: ' + cmd + '\')
+    sys.stdout.write('error: unknown cmd: ' + cmd + '\n')
     sys.stdout.flush()
 
 
@@ -230,6 +230,7 @@ if __name__ == '__main__':
                 else:
                     report_error_arg_cmd(arg)
                     exit(-1)
+
 
 """
     user = User()
