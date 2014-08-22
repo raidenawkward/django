@@ -40,8 +40,8 @@ class PbsUrlLoader(UrlLoader):
             fp.close()
 
             form = forms[0]
-            form['userName'] = user.getAttr('userName')
-            form['password'] = user.getAttr('password')
+            form['userName'] = user.get('userName')
+            form['password'] = user.get('password')
 
             self._cookie = ClientCookie
 
@@ -256,12 +256,12 @@ class PbsProductsAnalyser:
 
 if __name__ == '__main__':
     user = User()
-    user.loadFromFile('test1.user', )
+    user.loadFromFile('test.user', )
     print(user.toString())
 
     pl = PbsUrlLoader(url = 'http://suwon.qb.sec.samsung.net',
                       user = user,
-                      pageId = '2024322')
+                      pageId = '2115011')
     an = PbsProductsAnalyser(pl)
     an.analyse()
     for item in an.getProducts():
