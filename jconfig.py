@@ -4,6 +4,7 @@ class JConfig:
 
     def __init__(self):
         self._dict = {}
+        self._path = None
 
 
     def set(self, key, value):
@@ -33,34 +34,50 @@ class JConfig:
         d = self.getConfig()
 
         if d != None:
+            i = 0
             for (key, value) in d.items():
-                content += '\"' + key + '\":\"' + value + '\"\n'
+                content += b'\"' + key + '\":\"'
+                content += '' + str(value) + '\"'
+                if i != len(d) - 1:
+                    content += ','
+                content += '\n'
+                i += 1
 
         content += '}\n'
         return content
 
 
+    def getPath(self):
+        return self._path
+
+
     def loadFromFile(self, file):
+        self._path = file
+
         with open(file) as f:
             res = True
             try:
                 config = json.load(f)
                 self._dict = config
+                f.close()
             except ValueError:
                 res = False
 
         return res
 
     def saveToFile(self, file = None):
+        self._path = file
+
         content = self.toString()
         path = file
         if file == None:
-            path = str(self.getId()) + '.user'
+            return False
 
         with open(file, 'w') as f:
             try:
                 f.write(content)
                 res = True
+                f.close()
             except:
                 res = False
 

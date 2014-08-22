@@ -2,6 +2,7 @@
 import os
 import sys
 import time
+import base64
 
 from urldownloader import UrlDownloader
 from urldownloader import UrlDownloadTask
@@ -10,14 +11,20 @@ from pbsloader import PbsUrlLoader
 from pbsloader import PbsProductsAnalyser
 from urlfileinfo import UrlFileInfo
 from user import User
+from jconfig import JConfig
+
+
+
 
 class PbsProductGetter:
 
     PBS_URL = 'http://suwon.qb.sec.samsung.net'
 
 
-    def __init__(self, pbsNumber, user,
-                 downloadHeaderlist, outputDir,
+    def __init__(self, pbsNumber,
+                 user,
+                 downloadHeaderlist,
+                 outputDir,
                  monitorInterval = UrlDownloaderMonitor.DEF_TIME_INTERVAL,
                  pbsUrl = PBS_URL):
 
@@ -163,17 +170,23 @@ def print_version():
     sys.stdout.write(version)
     sys.stdout.flush()
 
+
 def arg_get_config_key(arg):
-    pass
+    index = arg.replace(' ', '').find('=')
+    if index < 0:
+        return None
+    return arg[0:index]
 
 
 def arg_get_config_value(arg):
-    pass
-
+    index = arg.replace(' ', '').find('=')
+    if index < 0:
+        return None
+    return arg[index + 1:]
 
 
 def report_error_arg_value(value):
-    sys.stdout.write('error: used error config value: ' + value = '\n')
+    sys.stdout.write('error: used error config value: ' + value + '\n')
     sys.stdout.flush()
 
 
@@ -183,16 +196,32 @@ def report_error_arg_cmd(cmd):
 
 
 def is_pbs_number(number):
-    return False
+    try:
+        num = int(number)
+        return True
+    except:
+        return False
+
+
+def encrypt_user_password(config):
+    password = config.get('password')
+    if password == None:
+        return
+
+    password = base64.encodestring(password)
+    password = password.replace('\n', '')
+    password = password.replace('\r', '')
+    config.set('password', password)
 
 
 
 
 if __name__ == '__main__':
-    configFile = '.config'
+    configFile = 'pget.config'
     outputDir = '.'
     pbsNumber = ''
     pbsUrl = PbsProductGetter.PBS_URL
+    downloadHeaderList = []
 
     argc = len(sys.argv)
     if argc <= 1:
@@ -232,19 +261,47 @@ if __name__ == '__main__':
                     exit(-1)
 
 
-"""
+    config = JConfig()
+    config.loadFromFile(configFile)
+    print(os.getcwd())
+    print('loading config from ' + configFile)
+    print(config.toString())
+
+    userName = config.get('user')
+    password = config.get('password')
+
+    if config.get('download-header') != None:
+        downloadHeaders = str(config.get('download-header'))
+        downloadHeaderList = downloadHeaders.split('|')
+
+    if config.get('output-dir') != None:
+        outputDir = config.get('output-dir')
+
+    try:
+        decodePassword = base64.decodestring(password)
+    except:
+        encrypt_user_password(config)
+        decodePassword = password
+
     user = User()
-    user.loadFromFile('test.user')
+    user.set('userName', userName)
+    user.set('password', decodePassword)
 
-    downloadList = ['BL_', 'CSC_']
+    if len(downloadHeaderList) == 0:
+        report_error_arg_value('download-header')
+        exit(0)
 
-    getter = PbsProductGetter('2088144',
+    config.saveToFile(configFile)
+
+    outputDir += '/' + str(pbsNumber)
+    if os.path.isdir(outputDir) == False:
+        os.mkdir(outputDir)
+
+    print(downloadHeaderList)
+    getter = PbsProductGetter(pbsNumber,
                               user,
-                              downloadList,
-                              None,
-                              1)
+                              downloadHeaderList,
+                              outputDir,
+                              1.0)
 
     getter.startDownloading()
-"""
-
-
